@@ -9,7 +9,7 @@ import { Logo } from "../components/Logo";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, token, user } = useAuth();
+const { token, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,14 +63,18 @@ const [accessGranted, setAccessGranted] =
   /* LOGIN LOGIC */
 const submitLogin = async () => {
 
-  // Prevent spam requests
-  if (loading || cooldown > 0) return;
+  /* PREVENT SPAM */
+  if (loading || cooldown > 0)
+    return;
 
-  // Clean inputs
-  const cleanEmail = email.trim();
-  const cleanPassword = password.trim();
+  /* CLEAN INPUTS */
+  const cleanEmail =
+    email.trim();
 
-  // Email required
+  const cleanPassword =
+    password.trim();
+
+  /* EMAIL REQUIRED */
   if (!cleanEmail) {
 
     setError(
@@ -80,11 +84,15 @@ const submitLogin = async () => {
     return;
   }
 
-  // Email validation
+  /* EMAIL VALIDATION */
   const emailRegex =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!emailRegex.test(cleanEmail)) {
+  if (
+    !emailRegex.test(
+      cleanEmail
+    )
+  ) {
 
     setError(
       "Enter a valid email address."
@@ -93,7 +101,7 @@ const submitLogin = async () => {
     return;
   }
 
-  // Password required
+  /* PASSWORD REQUIRED */
   if (!cleanPassword) {
 
     setError(
@@ -103,8 +111,10 @@ const submitLogin = async () => {
     return;
   }
 
-  // Password length
-  if (cleanPassword.length < 6) {
+  /* PASSWORD LENGTH */
+  if (
+    cleanPassword.length < 6
+  ) {
 
     setError(
       "Invalid credentials."
@@ -119,24 +129,45 @@ const submitLogin = async () => {
 
     setError("");
 
-    // Secure delay
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1000)
+    /* SECURITY DELAY */
+    await new Promise(
+      (resolve) =>
+        setTimeout(
+          resolve,
+          1000
+        )
     );
 
-    // Request
-      const res = await axios.post(
+    /* DEBUG URL */
+    console.log(
+      "API URL:",
+      `${import.meta.env.VITE_API_URL}/auth/login`
+    );
+
+    /* LOGIN REQUEST */
+    const res =
+      await axios.post(
         `${import.meta.env.VITE_API_URL}/auth/login`,
         {
-          email: cleanEmail,
-          password: cleanPassword,
+          email:
+            cleanEmail,
+
+          password:
+            cleanPassword,
         },
         {
-            timeout: 10000,
-            withCredentials: true,
-          }
+          timeout: 10000,
+
+          withCredentials: true,
+        }
       );
-    // Missing token check
+
+    console.log(
+      "LOGIN RESPONSE:",
+      res.data
+    );
+
+    /* VALIDATE RESPONSE */
     if (
       !res.data?.token ||
       !res.data?.user
@@ -149,63 +180,82 @@ const submitLogin = async () => {
       return;
     }
 
-    // Save auth
-    login(
-      res.data.user,
+    /* SAVE AUTH */
+    localStorage.setItem(
+      "token",
       res.data.token
     );
 
-    toast.success(
-      "Authentication successful"
+    localStorage.setItem(
+      "user",
+      JSON.stringify(
+        res.data.user
+      )
     );
 
-    // Role redirect
+    localStorage.setItem(
+      "role",
+      res.data.user.role
+    );
+
+    console.log(
+      "LOGIN SUCCESS"
+    );
+
+    /* SUCCESS */
+    window.location.href =
+      "/dashboard";
+
+  } catch (
+    error: unknown
+  ) {
+
+    console.log(
+      "LOGIN ERROR:",
+      error
+    );
+
     if (
-      res.data.user.role === "CLIENT"
+      axios.isAxiosError(
+        error
+      )
     ) {
 
-      navigate("/", {
-        replace: true,
-      });
+      console.log(
+        "BACKEND ERROR:",
+        error.response
+          ?.data
+      );
+
+      setError(
+        error.response
+          ?.data
+          ?.message ||
+          "Authentication failed."
+      );
 
     } else {
 
-      navigate("/dashboard", {
-        replace: true,
-      });
+      setError(
+        "Authentication failed."
+      );
     }
 
-  } catch (error: unknown) {
-
-  console.log(error);
-
-  if (axios.isAxiosError(error)) {
-
-    console.log(
-      "BACKEND ERROR:",
-      error.response?.data
+    toast.error(
+      "Authentication failed"
     );
 
-    setError(
-      error.response?.data?.message ||
-      "Authentication failed."
+    setCooldown(
+      (prev) =>
+        prev >= 30
+          ? 30
+          : prev + 5
     );
 
-  } else {
+  } finally {
 
-    setError(
-      "Authentication failed."
-    );
+    setLoading(false);
   }
-
-  toast.error(
-    "Authentication failed"
-  );
-
-} finally {
-
-  setLoading(false);
-}
 };
 
   return (
