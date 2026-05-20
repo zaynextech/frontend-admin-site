@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { toast } from "react-hot-toast/headless";
+import toast from "react-hot-toast";
 import InteractiveGrid from "../components/ui/interactive-grid";
 import { Logo } from "../components/Logo";
 
@@ -132,8 +132,9 @@ const submitLogin = async () => {
           password: cleanPassword,
         },
         {
-          timeout: 10000,
-        }
+            timeout: 10000,
+            withCredentials: true,
+          }
       );
     // Missing token check
     if (
@@ -176,43 +177,35 @@ const submitLogin = async () => {
 
   } catch (error: unknown) {
 
-    console.log(error);
+  console.log(error);
 
-    // Rate limit
-    if (
-      axios.isAxiosError(error) &&
-      error.response?.status === 429
-    ) {
+  if (axios.isAxiosError(error)) {
 
-      setError(
-        "Too many login attempts."
-      );
+    console.log(
+      "BACKEND ERROR:",
+      error.response?.data
+    );
 
-      setCooldown((prev) =>
-        prev >= 30 ? 30 : prev + 5
-      );
-
-      return;
-    }
-
-    // Generic auth error
     setError(
-      "Invalid credentials or unauthorized access."
+      error.response?.data?.message ||
+      "Authentication failed."
     );
 
-    // Escalating cooldown
-    setCooldown((prev) =>
-      prev >= 30 ? 30 : prev + 5
+  } else {
+
+    setError(
+      "Authentication failed."
     );
-
-    toast.error(
-      "Authentication failed"
-    );
-
-  } finally {
-
-    setLoading(false);
   }
+
+  toast.error(
+    "Authentication failed"
+  );
+
+} finally {
+
+  setLoading(false);
+}
 };
 
   return (
