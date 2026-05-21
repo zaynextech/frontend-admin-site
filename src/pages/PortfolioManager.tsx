@@ -27,7 +27,7 @@ interface Project {
   bookingEnabled: boolean;
 }
 
-const CATEGORY_OPTIONS = [ "School Management System", "Clinic/Hospital Management", "CRM Platform", "ERP Dashboard", "Booking System", "Trading Journal SaaS", "HR Management", "Inventory POS", "Real Estate Portal", "LMS Platform", "Fintech Dashboard", "Hotel Management", "Custom SaaS" ];
+const CATEGORY_OPTIONS = [ "School Management System","E-commerce", "Clinic/Hospital Management", "CRM Platform", "ERP Dashboard", "Booking System", "Trading Journal SaaS", "HR Management", "Inventory POS", "Real Estate Portal", "LMS Platform", "Fintech Dashboard", "Hotel Management", "Custom SaaS" ];
 const FEATURE_OPTIONS = [
   "User Authentication",
   "Role Based Access",
@@ -397,18 +397,31 @@ const uploadImage = async (
 const submitProject =
   async () => {
 
+    const token =
+      localStorage.getItem("token");
+
     if (editingId) {
 
       await axios.put(
         `${import.meta.env.VITE_API_URL}/portfolio/${editingId}`,
-        form
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
     } else {
 
       await axios.post(
         `${import.meta.env.VITE_API_URL}/portfolio`,
-        form
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
     }
@@ -418,9 +431,11 @@ const submitProject =
     setEditingId(null);
 
     fetchProjects();
-  };
+};
 
   const deleteProject = async (id: string) => {
+    const token =
+  localStorage.getItem("token");
     const confirmed =
   await ConfirmModal({
     title: "Delete Project?",
@@ -434,7 +449,12 @@ if (!confirmed) {
   return;
 }
     await axios.delete(
-      `${import.meta.env.VITE_API_URL}/portfolio/${id}`
+      `${import.meta.env.VITE_API_URL}/portfolio/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
     fetchProjects();
   };
